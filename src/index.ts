@@ -1,49 +1,206 @@
-import { SessionStorage } from "@remix-run/server-runtime";
+import {type StrategyVerifyCallback} from 'remix-auth'
 import {
-  AuthenticateOptions,
-  Strategy,
-  StrategyVerifyCallback,
-} from "remix-auth";
+  OAuth2Strategy,
+  type OAuth2Profile,
+  type OAuth2StrategyVerifyParams,
+} from 'remix-auth-oauth2'
 
-/**
- * This interface declares what configuration the strategy needs from the
- * developer to correctly work.
- */
-export interface MyStrategyOptions {
-  something: "You may need";
+interface SalesforceStrategyOptions {
+  clientID: string
+  clientSecret: string
+  callbackURL: string
+  scope?: string
+  sso_provider?: string
+  state?: string
+  immediate?: boolean
+  code_challenge?: string
+  display?: Display
+  login_hint?: string
+  nonce?: string
+  prompt?: Prompt
 }
 
-/**
- * This interface declares what the developer will receive from the strategy
- * to verify the user identity in their system.
- */
-export interface MyStrategyVerifyParams {
-  something: "Dev may need";
+enum Display {
+  PAGE = 'page',
+  POPUP = 'popup',
+  TOUCH = 'touch',
+  MOBILE = 'mobile',
 }
 
-export class MyStrategy<User> extends Strategy<User, MyStrategyVerifyParams> {
-  name = "change-me";
+enum Prompt {
+  LOGIN = 'login',
+  CONSENT = 'consent',
+  SELECT_ACCOUNT = 'select_account',
+}
+
+interface SalesforceExtraParams extends Record<string, string> {
+  signature: string
+  scope: string
+  instance_url: string
+  id: string
+  token_type: string
+  issued_at: string
+}
+
+interface SalesforceProfile extends OAuth2Profile {
+  sub: string
+  user_id: string
+  organization_id: string
+  preferred_username: string
+  nickname: string
+  email: string
+  email_verified: boolean
+  name: {
+    familyName?: string
+    givenName?: string
+  }
+  zoneinfo: string
+  photos: Array<{
+    value: string
+  }>
+  profile: string
+  picture: string
+  address: {country: string}
+  is_salesforce_integration_user: boolean
+  urls: {
+    enterprise: string
+    metadata: string
+    partner: string
+    rest: string
+    sobjects: string
+    search: string
+    query: string
+    recent: string
+    tooling_soap: string
+    tooling_rest: string
+    profile: string
+    custom_domain: string | undefined
+  }
+  active: boolean
+  user_type: string
+  language: string
+  locale: string
+  utcOffset: number
+  updated_at: string
+}
+
+export class SalesforceStrategy<User> extends OAuth2Strategy<
+  User,
+  SalesforceProfile,
+  SalesforceExtraParams
+> {
+  name = 'salesforce'
+
+  scope: string | undefined
+  private sso_provider: string | undefined
+  private state: string | undefined
+  private immediate: boolean | undefined
+  private code_challenge: string | undefined
+  private display: Display | undefined
+  private login_hint: string | undefined
+  private nonce: string | undefined
+  private prompt: Prompt | undefined
 
   constructor(
-    options: MyStrategyOptions,
-    verify: StrategyVerifyCallback<User, MyStrategyVerifyParams>
+    options: SalesforceStrategyOptions,
+    verify: StrategyVerifyCallback<
+      User,
+      OAuth2StrategyVerifyParams<SalesforceProfile, SalesforceExtraParams>
+    >,
   ) {
-    super(verify);
-    // do something with the options here
+    super(
+      {
+        authorizationURL:
+          'https://login.salesforce.com/services/oauth2/authorize',
+        tokenURL: 'https://login.salesforce.com/services/oauth2/token',
+        clientID: options.clientID,
+        clientSecret: options.clientSecret,
+        callbackURL: options.callbackURL,
+      },
+      verify,
+    )
+
+    this.scope = options.scope
+    this.sso_provider = options.sso_provider
+    this.state = options.state
+    this.immediate = options.immediate
+    this.code_challenge = options.code_challenge
+    this.display = options.display
+    this.login_hint = options.login_hint
+    this.nonce = options.nonce
+    this.prompt = options.prompt
   }
 
-  async authenticate(
-    request: Request,
-    sessionStorage: SessionStorage,
-    options: AuthenticateOptions
-  ): Promise<User> {
-    return await this.failure(
-      "Implement me!",
-      request,
-      sessionStorage,
-      options
-    );
-    // Uncomment me to do a success response
-    // this.success({} as User, request, sessionStorage, options);
+  protected authorizationParams() {
+    const urlSearchParams: Record<string, string> = {}
+    if (this.scope) {
+      urlSearchParams.scope = this.scope.toString()
+    }
+    if (this.sso_provider) {
+      urlSearchParams.sso_provider = this.sso_provider
+    }
+    if (this.state) {
+      urlSearchParams.state = this.state
+    }
+    if (this.immediate) {
+      urlSearchParams.immediate = this.immediate.toString()
+    }
+    if (this.code_challenge) {
+      urlSearchParams.code_challenge = this.code_challenge
+    }
+    if (this.display) {
+      urlSearchParams.display = this.display
+    }
+    if (this.login_hint) {
+      urlSearchParams.login_hint = this.login_hint
+    }
+    if (this.nonce) {
+      urlSearchParams.nonce = this.nonce
+    }
+    if (this.prompt) {
+      urlSearchParams.prompt = this.prompt
+    }
+
+    return new URLSearchParams(urlSearchParams)
+  }
+  protected async userProfile(
+    accessToken: string,
+    params: SalesforceExtraParams,
+  ): Promise<SalesforceProfile> {
+    const response = await fetch(
+      `${params.instance_url}/services/oauth2/userinfo`,
+      {
+        headers: {Authorization: `Bearer ${accessToken}`},
+      },
+    )
+    const data: SalesforceProfile = await response.json()
+    const profile: SalesforceProfile = {
+      provider: 'salesforce',
+      sub: data.sub,
+      email: data.email,
+      nickname: data.nickname,
+      user_id: data.user_id,
+      organization_id: data.organization_id,
+      preferred_username: data.preferred_username,
+      displayName: data.nickname,
+      email_verified: data.email_verified,
+      zoneinfo: data.zoneinfo,
+      profile: data.profile,
+      picture: data.picture,
+      address: data.address,
+      is_salesforce_integration_user: data.is_salesforce_integration_user,
+      urls: data.urls,
+      active: data.active,
+      user_type: data.user_type,
+      language: data.language,
+      locale: data.locale,
+      utcOffset: data.utcOffset,
+      updated_at: data.updated_at,
+      name: data.name,
+      emails: [{value: data.email}],
+      photos: data.photos,
+    }
+
+    return profile
   }
 }
