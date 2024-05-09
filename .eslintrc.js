@@ -1,24 +1,9 @@
-/* eslint-disable unicorn/prefer-module */
+/** @type {import('eslint').Linter.Config} */
 module.exports = {
-  root: true,
-  parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint', 'unicorn', 'jest', 'prettier'],
-  extends: [
-    'plugin:unicorn/recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:prettier/recommended',
-  ],
-  rules: {
-    'prefer-const': 'off',
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/no-non-null-assertion': 'off',
-    'no-unused-vars': 'off',
-    'no-var': 'off',
-    'unicorn/no-null': 'off',
-    'unicorn/prefer-node-protocol': 'off',
-    'unicorn/filename-case': 'off',
-    'unicorn/prevent-abbreviations': 'off',
-    semi: ['off'],
-    quotes: ['warn', 'single'],
-  },
+	extends: [
+		'@remix-run/eslint-config',
+		'@remix-run/eslint-config/node',
+		'prettier',
+		'plugin:react-hooks/recommended',
+	],
 }
