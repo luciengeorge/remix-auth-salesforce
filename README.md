@@ -1,37 +1,6 @@
-# Remix Auth - Strategy Template
+# SalesforceStrategy
 
-> A template for creating a new Remix Auth strategy.
-
-If you want to create a new strategy for Remix Auth, you could use this as a template for your repository.
-
-The repo installs the latest version of Remix Auth and do the setup for you to have tests, linting and typechecking.
-
-## How to use it
-
-1. In the `package.json` change `name` to your strategy name, also add a description and ideally an author, repository and homepage keys.
-2. In `src/index.ts` change the `MyStrategy` for the strategy name you want to use.
-3. Implement the strategy flow inside the `authenticate` method. Use `this.success` and `this.failure` to correctly send finish the flow.
-4. In `tests/index.test.ts` change the tests to use your strategy and test it. Inside the tests you have access to `jest-fetch-mock` to mock any fetch you may need to do.
-5. Once you are ready, set the secrets on Github
-   - `NPM_TOKEN`: The token for the npm registry
-   - `GIT_USER_NAME`: The git username you want the bump workflow to use in the commit.
-   - `GIT_USER_EMAIL`: The email you want the bump workflow to use in the commit.
-
-## Scripts
-
-- `build`: Build the project for production using the TypeScript compiler (strips the types).
-- `typecheck`: Check the project for type errors, this also happens in build but it's useful to do in development.
-- `lint`: Runs ESLint against the source codebase to ensure it pass the linting rules.
-- `test`: Runs all the test using Jest.
-
-## Documentations
-
-To facilitate creating a documentation for your strategy, you can use the following Markdown
-
-```markdown
-# Strategy Name
-
-<!-- Description -->
+The Salesforce strategy is used to authenticate users against a Salesforce account. It extends the OAuth2Strategy.
 
 ## Supported runtimes
 
@@ -40,9 +9,113 @@ To facilitate creating a documentation for your strategy, you can use the follow
 | Node.js    | ✅          |
 | Cloudflare | ✅          |
 
-<!-- If it doesn't support one runtime, explain here why -->
+## Usage
 
-## How to use
+### Create a Salesforce Connected App
 
-<!-- Explain how to use the strategy, here you should tell what options it expects from the developer when instantiating the strategy -->
+Follow the steps on [the Salesforce documentation](https://help.salesforce.com/s/articleView?id=sf.connected_app_client_credentials_setup.htm&type=5) to create a connected app and get a client ID, client secret.
+
+### Create the strategy instance
+
+```tsx
+// app/utils/auth.server.ts
+import { Authenticator } from "remix-auth";
+import { SalesforceStrategy } from "remix-auth-salesforce";
+
+// Create an instance of the authenticator, pass a generic with what your
+// strategies will return and will be stored in the session
+export const authenticator = new Authenticator<User>(sessionStorage);
+
+let salesforceStrategy = new SalesforceStrategy(
+  {
+    callbackURL: "https://example.com/auth/salesforce/callback",
+    clientID: "YOUR_SALESFORCE_CLIENT_ID",
+    clientSecret: "YOUR_SALESFORCE_CLIENT_SECRET",
+  },
+  async ({ accessToken, refreshToken, extraParams, profile }) => {
+    // Implement your logic to find or create a user
+  }
+);
+
+authenticator.use(salesforceStrategy);
+```
+
+### Setup your routes
+
+```tsx
+// app/routes/login.tsx
+export default function Login() {
+  return (
+    <Form action="/auth/salesforce" method="post">
+      <button>Login with Salesforce</button>
+    </Form>
+  );
+}
+```
+
+```tsx
+// app/routes/auth/salesforce.tsx
+import type { ActionArgs } from "@remix-run/node";
+
+import { authenticator } from "~/utils/auth.server";
+
+export let loader = () => redirect("/login");
+
+export let action = ({ request }: ActionArgs) => {
+  return authenticator.authenticate("salesforce", request);
+};
+```
+
+```tsx
+// app/routes/auth/salesforce/callback.tsx
+import type { LoaderArgs } from "@remix-run/node";
+
+import { authenticator } from "~/utils/auth.server";
+
+export let loader = ({ request }: LoaderArgs) => {
+  return authenticator.authenticate("salesforce", request, {
+    successRedirect: "/dashboard",
+    failureRedirect: "/login",
+  });
+};
+```
+
+```tsx
+// app/routes/auth/logout.ts
+import type { ActionArgs } from "@remix-run/node";
+
+import { redirect } from "@remix-run/node";
+
+import { destroySession, getSession } from "~/utils/auth.server";
+
+export const action = async ({ request }: ActionArgs) => {
+  const session = await getSession(request.headers.get("Cookie"));
+  const logoutURL = new URL(process.env.SALESFORCE_LOGOUT_URL)
+
+  logoutURL.searchParams.set("client_id", process.env.SALESFORCE_CLIENT_ID);
+  logoutURL.searchParams.set("returnTo", process.env.SALESFORCE_RETURN_TO_URL);
+
+  return redirect(logoutURL.toString(), {
+    headers: {
+      "Set-Cookie": await destroySession(session),
+    },
+  });
+};
+```
+
+## Advanced Usage
+
+### Link directly to signup
+
+```tsx
+// app/routes/register.tsx
+export default function Register() {
+  return (
+    <Form action="/auth/salesforce?screen_hint=mobile" method="post">
+      <button>Register with Salesforce</button>
+    </Form>
+  );
+}
+
+// https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_tokens_scopes.htm&type=5
 ```
