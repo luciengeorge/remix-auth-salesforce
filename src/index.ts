@@ -6,38 +6,48 @@ import {
 } from 'remix-auth-oauth2'
 
 type SalesforceScope =
-  | 'cdp_query_api'
-  | 'pardot_api'
-  | 'cdp_profile_api'
-  | 'chatter_api'
+  | 'einstein_gpt_api'
+  | 'pwdless_login_api'
+  | 'lightning'
+  | 'visualforce'
+  | 'cdp_api'
+  | 'chatbot_api'
+  | 'content'
+  | 'custom_permissions'
+  | 'sfap_api'
+  | 'cdp_calculated_insight_api'
+  | 'cdp_identityresolution_api'
   | 'cdp_ingest_api'
+  | 'cdp_profile_api'
+  | 'pardot_api'
+  | 'cdp_query_api'
+  | 'cdp_segment_api'
   | 'eclair_api'
   | 'wave_api'
-  | 'api'
-  | 'custom_permissions'
+  | 'chatter_api'
+  | 'forgot_password'
+  | 'user_registration_api'
+  | 'interaction_api'
   | 'id'
   | 'profile'
   | 'email'
   | 'address'
   | 'phone'
-  | 'lightning'
-  | 'content'
   | 'openid'
   | 'full'
+  | 'api'
+  | 'web'
   | 'refresh_token'
   | 'offline_access'
-  | 'visualforce'
-  | 'chatbot_api'
-  | 'user_registration_api'
-  | 'forgot_password'
-  | 'cdp_api'
-  | 'sfap_api'
-  | 'interaction_api'
+
 type Display = 'page' | 'popup' | 'touch' | 'mobile'
 type Prompt = 'login' | 'consent' | 'select_account'
 
 export const SalesforceStrategyDefaultName = 'salesforce'
-export const SalesforceStrategyDefaultScope: SalesforceScope = 'full'
+export const SalesforceStrategyDefaultScope: SalesforceScope[] = [
+  'full',
+  'refresh_token',
+]
 export const SalesforceStrategyScopeSeperator = ' '
 
 export interface SalesforceStrategyOptions {
@@ -163,7 +173,7 @@ export class SalesforceStrategy<User> extends OAuth2Strategy<
 
   private getScope(scope: SalesforceStrategyOptions['scope']) {
     if (!scope) {
-      return [SalesforceStrategyDefaultScope]
+      return SalesforceStrategyDefaultScope
     } else if (typeof scope === 'string') {
       return scope.split(SalesforceStrategyScopeSeperator) as SalesforceScope[]
     }
@@ -200,7 +210,7 @@ export class SalesforceStrategy<User> extends OAuth2Strategy<
     if (this.prompt) {
       params.set('prompt', this.prompt)
     }
-
+    console.log(params)
     return params
   }
   protected async userProfile(
