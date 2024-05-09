@@ -1,5 +1,5 @@
 import {createCookieSessionStorage} from '@remix-run/node'
-import {SalesforceStrategy, SalesforceStrategyOptions} from '../src'
+import {SalesforceStrategy, type SalesforceStrategyOptions} from '../src'
 import fetchMock, {enableFetchMocks} from 'jest-fetch-mock'
 import {type AuthenticateOptions} from 'remix-auth'
 
