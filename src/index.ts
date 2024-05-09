@@ -5,32 +5,53 @@ import {
   type OAuth2StrategyVerifyParams,
 } from 'remix-auth-oauth2'
 
-interface SalesforceStrategyOptions {
+type SalesforceScope =
+  | 'cdp_query_api'
+  | 'pardot_api'
+  | 'cdp_profile_api'
+  | 'chatter_api'
+  | 'cdp_ingest_api'
+  | 'eclair_api'
+  | 'wave_api'
+  | 'api'
+  | 'custom_permissions'
+  | 'id'
+  | 'profile'
+  | 'email'
+  | 'address'
+  | 'phone'
+  | 'lightning'
+  | 'content'
+  | 'openid'
+  | 'full'
+  | 'refresh_token'
+  | 'offline_access'
+  | 'visualforce'
+  | 'chatbot_api'
+  | 'user_registration_api'
+  | 'forgot_password'
+  | 'cdp_api'
+  | 'sfap_api'
+  | 'interaction_api'
+type Display = 'page' | 'popup' | 'touch' | 'mobile'
+type Prompt = 'login' | 'consent' | 'select_account'
+
+export const SalesforceStrategyDefaultName = 'salesforce'
+export const SalesforceStrategyDefaultScope: SalesforceScope = 'full'
+export const SalesforceStrategyScopeSeperator = ' '
+
+export interface SalesforceStrategyOptions {
   clientID: string
   clientSecret: string
   callbackURL: string
-  scope?: string
+  scope?: SalesforceScope[] | string
   sso_provider?: string
-  state?: string
   immediate?: boolean
   code_challenge?: string
   display?: Display
   login_hint?: string
   nonce?: string
   prompt?: Prompt
-}
-
-enum Display {
-  PAGE = 'page',
-  POPUP = 'popup',
-  TOUCH = 'touch',
-  MOBILE = 'mobile',
-}
-
-enum Prompt {
-  LOGIN = 'login',
-  CONSENT = 'consent',
-  SELECT_ACCOUNT = 'select_account',
 }
 
 interface SalesforceExtraParams extends Record<string, string> {
@@ -50,6 +71,8 @@ interface SalesforceProfile extends OAuth2Profile {
   nickname: string
   email: string
   email_verified: boolean
+  given_name?: string
+  family_name?: string
   name: {
     familyName?: string
     givenName?: string
@@ -91,7 +114,7 @@ export class SalesforceStrategy<User> extends OAuth2Strategy<
 > {
   name = 'salesforce'
 
-  scope: string | undefined
+  scope: string
   private sso_provider: string | undefined
   private state: string | undefined
   private immediate: boolean | undefined
@@ -120,9 +143,10 @@ export class SalesforceStrategy<User> extends OAuth2Strategy<
       verify,
     )
 
-    this.scope = options.scope
+    this.scope = this.getScope(options.scope).join(
+      SalesforceStrategyScopeSeperator,
+    )
     this.sso_provider = options.sso_provider
-    this.state = options.state
     this.immediate = options.immediate
     this.code_challenge = options.code_challenge
     this.display = options.display
@@ -131,37 +155,47 @@ export class SalesforceStrategy<User> extends OAuth2Strategy<
     this.prompt = options.prompt
   }
 
-  protected authorizationParams() {
-    const urlSearchParams: Record<string, string> = {}
-    if (this.scope) {
-      urlSearchParams.scope = this.scope.toString()
-    }
-    if (this.sso_provider) {
-      urlSearchParams.sso_provider = this.sso_provider
-    }
-    if (this.state) {
-      urlSearchParams.state = this.state
-    }
-    if (this.immediate) {
-      urlSearchParams.immediate = this.immediate.toString()
-    }
-    if (this.code_challenge) {
-      urlSearchParams.code_challenge = this.code_challenge
-    }
-    if (this.display) {
-      urlSearchParams.display = this.display
-    }
-    if (this.login_hint) {
-      urlSearchParams.login_hint = this.login_hint
-    }
-    if (this.nonce) {
-      urlSearchParams.nonce = this.nonce
-    }
-    if (this.prompt) {
-      urlSearchParams.prompt = this.prompt
+  private getScope(scope: SalesforceStrategyOptions['scope']) {
+    if (!scope) {
+      return [SalesforceStrategyDefaultScope]
+    } else if (typeof scope === 'string') {
+      return scope.split(SalesforceStrategyScopeSeperator) as SalesforceScope[]
     }
 
-    return new URLSearchParams(urlSearchParams)
+    return scope
+  }
+
+  protected authorizationParams(params: URLSearchParams) {
+    params.set('scope', this.scope)
+    if (this.sso_provider) {
+      params.set('sso_provider', this.sso_provider)
+    }
+
+    if (this.immediate) {
+      params.set('immediate', this.immediate.toString())
+    }
+
+    if (this.code_challenge) {
+      params.set('code_challenge', this.code_challenge)
+    }
+
+    if (this.display) {
+      params.set('display', this.display)
+    }
+
+    if (this.login_hint) {
+      params.set('login_hint', this.login_hint)
+    }
+
+    if (this.nonce) {
+      params.set('nonce', this.nonce)
+    }
+
+    if (this.prompt) {
+      params.set('prompt', this.prompt)
+    }
+
+    return params
   }
   protected async userProfile(
     accessToken: string,
@@ -196,7 +230,10 @@ export class SalesforceStrategy<User> extends OAuth2Strategy<
       locale: data.locale,
       utcOffset: data.utcOffset,
       updated_at: data.updated_at,
-      name: data.name,
+      name: {
+        familyName: data.family_name,
+        givenName: data.given_name,
+      },
       emails: [{value: data.email}],
       photos: data.photos,
     }
