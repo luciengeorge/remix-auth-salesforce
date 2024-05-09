@@ -64,47 +64,53 @@ interface SalesforceExtraParams extends Record<string, string> {
 }
 
 interface SalesforceProfile extends OAuth2Profile {
-  sub: string
-  user_id: string
-  organization_id: string
-  preferred_username: string
-  nickname: string
-  email: string
-  email_verified: boolean
+  organization_id?: string
+
+  _json?: SalesforceUserInfo
+}
+
+interface Urls {
+  enterprise?: string
+  metadata?: string
+  partner?: string
+  rest?: string
+  sobjects?: string
+  search?: string
+  query?: string
+  recent?: string
+  tooling_soap?: string
+  tooling_rest?: string
+  profile?: string
+  custom_domain?: string
+}
+
+interface SalesforceUserInfo {
+  sub?: string
+  user_id?: string
+  organization_id?: string
+  preferred_username?: string
+  nickname?: string
+  name?: string
+  email?: string
+  email_verified?: boolean
   given_name?: string
   family_name?: string
-  name: {
-    familyName?: string
-    givenName?: string
+  zoneinfo?: string
+  photos?: {
+    picture?: string
+    thumbnail?: string
   }
-  zoneinfo: string
-  photos: Array<{
-    value: string
-  }>
-  profile: string
-  picture: string
-  address: {country: string}
-  is_salesforce_integration_user: boolean
-  urls: {
-    enterprise: string
-    metadata: string
-    partner: string
-    rest: string
-    sobjects: string
-    search: string
-    query: string
-    recent: string
-    tooling_soap: string
-    tooling_rest: string
-    profile: string
-    custom_domain: string | undefined
-  }
-  active: boolean
-  user_type: string
-  language: string
-  locale: string
-  utcOffset: number
-  updated_at: string
+  profile?: string
+  picture?: string
+  address?: {country?: string}
+  is_salesforce_integration_user?: boolean
+  urls?: Urls
+  active?: boolean
+  user_type?: string
+  language?: string
+  locale?: string
+  utcOffset?: number
+  updated_at?: string
 }
 
 export class SalesforceStrategy<User> extends OAuth2Strategy<
@@ -207,36 +213,38 @@ export class SalesforceStrategy<User> extends OAuth2Strategy<
         headers: {Authorization: `Bearer ${accessToken}`},
       },
     )
-    const data: SalesforceProfile = await response.json()
+    const data: SalesforceUserInfo = await response.json()
     const profile: SalesforceProfile = {
       provider: 'salesforce',
-      sub: data.sub,
-      email: data.email,
-      nickname: data.nickname,
-      id: data.user_id,
-      user_id: data.user_id,
-      organization_id: data.organization_id,
-      preferred_username: data.preferred_username,
-      displayName: data.nickname,
-      email_verified: data.email_verified,
-      zoneinfo: data.zoneinfo,
-      profile: data.profile,
-      picture: data.picture,
-      address: data.address,
-      is_salesforce_integration_user: data.is_salesforce_integration_user,
-      urls: data.urls,
-      active: data.active,
-      user_type: data.user_type,
-      language: data.language,
-      locale: data.locale,
-      utcOffset: data.utcOffset,
-      updated_at: data.updated_at,
-      name: {
+    }
+
+    profile._json = data
+    if (data.sub) {
+      profile.id = data.sub
+    }
+
+    if (data.organization_id) {
+      profile.organization_id = data.organization_id
+    }
+
+    if (data.email) {
+      profile.emails = [{value: data.email}]
+    }
+
+    if (data.given_name || data.family_name) {
+      profile.name = {
         familyName: data.family_name,
         givenName: data.given_name,
-      },
-      emails: [{value: data.email}],
-      photos: data.photos,
+      }
+    }
+
+    if (data.photos && data.photos.thumbnail) {
+      profile.photos = [{value: data.photos.thumbnail}]
+    } else if (data.photos && data.photos.picture) {
+      profile.photos = [{value: data.photos.picture}]
+    }
+    if (data.nickname) {
+      profile.displayName = data.nickname
     }
 
     return profile
