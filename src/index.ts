@@ -213,6 +213,7 @@ export class SalesforceStrategy<User> extends OAuth2Strategy<
       sub: data.sub,
       email: data.email,
       nickname: data.nickname,
+      id: data.user_id,
       user_id: data.user_id,
       organization_id: data.organization_id,
       preferred_username: data.preferred_username,
