@@ -210,7 +210,6 @@ export class SalesforceStrategy<User> extends OAuth2Strategy<
     if (this.prompt) {
       params.set('prompt', this.prompt)
     }
-    console.log(params)
     return params
   }
   protected async userProfile(

@@ -61,7 +61,7 @@ describe(SalesforceStrategy, () => {
     }
   })
 
-  test('should have the scope `full` as default', async () => {
+  test('should have the scope `full refresh_token` as default', async () => {
     let strategy = new SalesforceStrategy(DEFAULT_OPTIONS, verify)
 
     let request = new Request(REQUEST_URL)
@@ -76,7 +76,7 @@ describe(SalesforceStrategy, () => {
 
       let redirectUrl = new URL(location)
 
-      expect(redirectUrl.searchParams.get('scope')).toBe('full')
+      expect(redirectUrl.searchParams.get('scope')).toBe('full refresh_token')
     }
   })
 
