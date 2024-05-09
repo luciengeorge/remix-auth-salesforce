@@ -111,7 +111,7 @@ export const action = async ({ request }: ActionArgs) => {
 // app/routes/register.tsx
 export default function Register() {
   return (
-    <Form action="/auth/salesforce?screen_hint=mobile" method="post">
+    <Form action="/auth/salesforce?display=mobile" method="post">
       <button>Register with Salesforce</button>
     </Form>
   );
