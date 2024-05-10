@@ -5,7 +5,7 @@ import {
   type OAuth2StrategyVerifyParams,
 } from 'remix-auth-oauth2'
 
-type SalesforceScope =
+export type SalesforceScope =
   | 'einstein_gpt_api'
   | 'pwdless_login_api'
   | 'lightning'
@@ -40,8 +40,8 @@ type SalesforceScope =
   | 'refresh_token'
   | 'offline_access'
 
-type Display = 'page' | 'popup' | 'touch' | 'mobile'
-type Prompt = 'login' | 'consent' | 'select_account'
+export type Display = 'page' | 'popup' | 'touch' | 'mobile'
+export type Prompt = 'login' | 'consent' | 'select_account'
 
 export const SalesforceStrategyDefaultName = 'salesforce'
 export const SalesforceStrategyDefaultScope: SalesforceScope[] = [
@@ -64,7 +64,7 @@ export interface SalesforceStrategyOptions {
   prompt?: Prompt
 }
 
-interface SalesforceExtraParams extends Record<string, string> {
+export interface SalesforceExtraParams extends Record<string, string> {
   signature: string
   scope: string
   instance_url: string
@@ -73,13 +73,13 @@ interface SalesforceExtraParams extends Record<string, string> {
   issued_at: string
 }
 
-interface SalesforceProfile extends OAuth2Profile {
+export interface SalesforceProfile extends OAuth2Profile {
   organization_id?: string
 
   _json?: SalesforceUserInfo
 }
 
-interface Urls {
+export interface Urls {
   enterprise?: string
   metadata?: string
   partner?: string
@@ -94,7 +94,7 @@ interface Urls {
   custom_domain?: string
 }
 
-interface SalesforceUserInfo {
+export interface SalesforceUserInfo {
   sub?: string
   user_id?: string
   organization_id?: string
