@@ -1,9 +1,9 @@
 import {type StrategyVerifyCallback} from 'remix-auth'
-import {OAuth2Strategy} from 'remix-auth-oauth2'
-import type {
-  TokenResponseBody,
-  OAuth2Profile,
-  OAuth2StrategyVerifyParams,
+import {
+  OAuth2Strategy,
+  type TokenResponseBody,
+  type OAuth2Profile,
+  type OAuth2StrategyVerifyParams,
 } from 'remix-auth-oauth2'
 
 export type SalesforceScope =

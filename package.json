@@ -57,6 +57,6 @@
   },
   "dependencies": {
     "remix-auth": "^3.7.0",
-    "remix-auth-oauth2": "^2.1.0"
+    "remix-auth-oauth2": "^1.11.2"
   }
 }
