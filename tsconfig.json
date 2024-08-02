@@ -2,8 +2,8 @@
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2019"],
     "esModuleInterop": true,
-    "moduleResolution": "Node",
-    "module": "CommonJS",
+    "moduleResolution": "Node16",
+    "module": "Node16",
     "target": "ES2019",
     "strict": true,
     "skipLibCheck": true,

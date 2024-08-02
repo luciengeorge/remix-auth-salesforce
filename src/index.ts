@@ -1,8 +1,9 @@
 import {type StrategyVerifyCallback} from 'remix-auth'
-import {
-  OAuth2Strategy,
-  type OAuth2Profile,
-  type OAuth2StrategyVerifyParams,
+import {OAuth2Strategy} from 'remix-auth-oauth2'
+import type {
+  TokenResponseBody,
+  OAuth2Profile,
+  OAuth2StrategyVerifyParams,
 } from 'remix-auth-oauth2'
 
 export type SalesforceScope =
@@ -149,12 +150,13 @@ export class SalesforceStrategy<User> extends OAuth2Strategy<
   ) {
     super(
       {
-        authorizationURL:
+        authorizationEndpoint:
           'https://login.salesforce.com/services/oauth2/authorize',
-        tokenURL: 'https://login.salesforce.com/services/oauth2/token',
-        clientID: options.clientID,
+
+        tokenEndpoint: 'https://login.salesforce.com/services/oauth2/token',
+        clientId: options.clientID,
         clientSecret: options.clientSecret,
-        callbackURL: options.callbackURL,
+        redirectURI: options.callbackURL,
       },
       verify,
     )
@@ -213,13 +215,12 @@ export class SalesforceStrategy<User> extends OAuth2Strategy<
     return params
   }
   protected async userProfile(
-    accessToken: string,
-    params: SalesforceExtraParams,
+    tokens: TokenResponseBody & SalesforceExtraParams,
   ): Promise<SalesforceProfile> {
     const response = await fetch(
-      `${params.instance_url}/services/oauth2/userinfo`,
+      `${tokens.instance_url}/services/oauth2/userinfo`,
       {
-        headers: {Authorization: `Bearer ${accessToken}`},
+        headers: {Authorization: `Bearer ${tokens.access_token}`},
       },
     )
     const data: SalesforceUserInfo = await response.json()
