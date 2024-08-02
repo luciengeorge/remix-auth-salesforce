@@ -1,6 +1,6 @@
 {
   "name": "remix-auth-salesforce",
-  "version": "1.2.5",
+  "version": "1.3.0",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
   "scripts": {
@@ -55,7 +55,7 @@
     "typescript": "^5.2.0"
   },
   "dependencies": {
-    "remix-auth": "^3.6.0",
-    "remix-auth-oauth2": "^1.11.2"
+    "remix-auth": "^3.7.0",
+    "remix-auth-oauth2": "^2.1.0"
   }
 }
