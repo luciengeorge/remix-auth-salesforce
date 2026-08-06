@@ -1,6 +1,19 @@
 {
   "name": "remix-auth-salesforce",
   "version": "1.3.5",
+  "description": "Remix Auth strategy to authenticate users against a Salesforce account, extending OAuth2Strategy. Supports Node.js and Cloudflare.",
+  "homepage": "https://www.luciengeorge.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luciengeorge/remix-auth-salesforce.git"
+  },
+  "bugs": {
+    "url": "https://github.com/luciengeorge/remix-auth-salesforce/issues"
+  },
+  "author": {
+    "name": "Lucien George",
+    "url": "https://www.luciengeorge.com"
+  },
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
   "scripts": {
